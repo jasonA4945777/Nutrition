@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="飲食計畫">
+<meta name="theme-color" content="#1a2e1a">
+<title>4週飲食改造</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a18;--ink2:#3d3d38;--ink3:#7a7a72;--paper:#f5f2ec;--paper2:#ede9e0;--paper3:#e3ddd1;--green:#2d5a27;--green2:#4a8c42;--green3:#c8e6c2;--green4:#eef7ec;--amber:#c47c2b;--amber2:#fdf0dc;--red:#9b3a2f;--red2:#fcecea;--blue:#2a5080;--blue2:#e8f0f8;--r:10px;--r2:16px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--ink);overflow:hidden}
+body{font-family:'Noto Sans TC',sans-serif;color:var(--ink);overscroll-behavior:none}
+#app{height:100dvh;display:flex;flex-direction:column;background:var(--paper);max-width:430px;margin:0 auto;position:relative;overflow:hidden}
+#topbar{flex-shrink:0;background:var(--green);color:#fff;padding:env(safe-area-inset-top,12px) 20px 14px;display:flex;align-items:flex-end;justify-content:space-between}
+.app-title{font-family:'Noto Serif TC',serif;font-size:17px;font-weight:700;letter-spacing:.5px}
+.week-badge{font-size:11px;font-weight:500;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:20px;letter-spacing:.3px}
+#tabs{flex-shrink:0;display:flex;background:var(--green);border-bottom:2px solid rgba(255,255,255,.1)}
+.tab{flex:1;padding:10px 2px 9px;font-size:9px;font-weight:500;letter-spacing:.2px;color:rgba(255,255,255,.55);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-2px}
+.tab.active{color:#fff;border-bottom-color:#8fdb84}
+.tab .tab-icon{font-size:15px;display:block;margin-bottom:2px}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(env(safe-area-inset-bottom,16px)+16px)}
+.panel{display:none}.panel.active{display:block}
+.today-hero{background:linear-gradient(160deg,var(--green) 0%,#3d7a35 100%);padding:22px 20px 26px;color:#fff}
+.today-day{font-size:12px;font-weight:500;opacity:.7;letter-spacing:.8px;margin-bottom:4px}
+.today-theme{font-family:'Noto Serif TC',serif;font-size:22px;font-weight:700;margin-bottom:8px}
+.today-desc{font-size:13px;opacity:.8;line-height:1.6}
+.progress-ring{margin-top:16px}
+.progress-label{font-size:11px;opacity:.6;margin-bottom:6px}
+.progress-bar{height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:#8fdb84;border-radius:2px;transition:width .6s ease}
+.section-title{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--ink3);padding:18px 20px 8px;text-transform:uppercase}
+.habit-list{padding:0 16px;display:flex;flex-direction:column;gap:8px}
+.habit-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--paper3);border-radius:var(--r);padding:13px 15px;cursor:pointer;transition:all .2s;user-select:none}
+.habit-item.done{background:var(--green4);border-color:var(--green3)}
+.habit-check{width:22px;height:22px;flex-shrink:0;border:1.5px solid var(--paper3);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:12px}
+.habit-item.done .habit-check{background:var(--green2);border-color:var(--green2);color:#fff}
+.habit-text{font-size:14px;color:var(--ink2);line-height:1.4;flex:1}
+.habit-item.done .habit-text{color:var(--green);text-decoration:line-through;text-decoration-color:var(--green3)}
+.meal-cards{padding:0 16px;display:flex;flex-direction:column;gap:8px}
+.meal-card{background:#fff;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
+.meal-header{display:flex;align-items:center;gap:10px;padding:12px 15px;cursor:pointer}
+.meal-icon{font-size:20px}.meal-info{flex:1}
+.meal-label{font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px}
+.meal-name{font-size:14px;font-weight:500;color:var(--ink);margin-top:1px}
+.meal-chevron{font-size:12px;color:var(--ink3);transition:transform .2s}
+.meal-card.open .meal-chevron{transform:rotate(180deg)}
+.meal-body{display:none;padding:0 15px 13px}
+.meal-card.open .meal-body{display:block}
+.meal-tip{font-size:12px;color:var(--ink3);line-height:1.6;padding-top:6px;border-top:1px solid var(--paper2)}
+.meal-tip strong{color:var(--green)}
+.tip-card{margin:8px 16px 0;background:var(--amber2);border:1px solid #f0d4a0;border-radius:var(--r);padding:13px 15px;display:flex;gap:10px;align-items:flex-start}
+.tip-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.tip-text{font-size:13px;color:var(--amber);line-height:1.6;font-style:italic}
+.note-wrap{margin:12px 16px 0}
+.note-area{width:100%;min-height:80px;border:1px solid var(--paper3);border-radius:var(--r);background:#fff;padding:10px 12px;font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--ink2);line-height:1.6;resize:none;outline:none}
+.note-area:focus{border-color:var(--green3)}
+.note-save-btn{margin-top:6px;width:100%;padding:9px;border-radius:var(--r);border:1px solid var(--green3);background:var(--green4);color:var(--green);font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.lookup-grid{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.lookup-card{background:#fff;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
+.lookup-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.lookup-emoji{font-size:22px}.lookup-scene{font-size:15px;font-weight:600;color:var(--ink);flex:1}
+.lookup-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:var(--green4);color:var(--green)}
+.lookup-body{display:none;background:var(--paper);border-top:1px solid var(--paper2)}
+.lookup-card.open .lookup-body{display:block}
+.lookup-row{padding:11px 16px;border-bottom:1px solid var(--paper2);display:flex;gap:8px;align-items:flex-start}
+.lookup-row:last-child{border-bottom:none}
+.lr-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.lr-dot.good{background:var(--green2)}.lr-dot.tip{background:var(--amber)}.lr-dot.warn{background:var(--red)}
+.lr-text{font-size:13px;color:var(--ink2);line-height:1.5}
+.lr-text strong{color:var(--ink);font-weight:600}
+.scripts-list{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.script-card{background:#fff;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
+.script-header{padding:14px 16px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.script-emoji{font-size:20px;flex-shrink:0}
+.script-scene{font-size:14px;font-weight:600;color:var(--ink);flex:1;line-height:1.3}
+.script-body{display:none;border-top:1px solid var(--paper2)}
+.script-card.open .script-body{display:block}
+.script-line{padding:10px 16px;border-bottom:1px solid var(--paper2);display:flex;gap:10px;align-items:flex-start}
+.script-line:last-child{border-bottom:none}
+.sl-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;margin-top:2px;letter-spacing:.3px}
+.sl-tag.old{background:var(--red2);color:var(--red)}.sl-tag.new{background:var(--green4);color:var(--green)}.sl-tag.why{background:var(--blue2);color:var(--blue)}
+.sl-text{font-size:13px;color:var(--ink2);line-height:1.5}
+.recovery-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.rec-card{background:#fff;border:1px solid var(--paper3);border-radius:var(--r2);overflow:hidden}
+.rec-header{padding:16px;cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.rec-icon{font-size:24px;flex-shrink:0}
+.rec-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px;font-family:'Noto Serif TC',serif}
+.rec-sub{font-size:12px;color:var(--ink3);line-height:1.4}
+.rec-body{display:none;border-top:1px solid var(--paper2)}
+.rec-card.open .rec-body{display:block}
+.rec-step{padding:12px 16px;border-bottom:1px solid var(--paper2);display:flex;gap:10px}
+.rec-step:last-child{border-bottom:none}
+.rec-num{width:20px;height:20px;border-radius:50%;flex-shrink:0;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.rec-step-text{font-size:13px;color:var(--ink2);line-height:1.6}
+.rec-step-text strong{color:var(--ink);font-weight:600}
+.avoid{color:var(--red);font-weight:600}
+.week-tabs{display:flex;padding:12px 16px 0;gap:0}
+.wtab{flex:1;padding:9px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--ink3);border-bottom:2px solid var(--paper3);cursor:pointer;transition:all .2s}
+.wtab.active{color:var(--green);border-bottom-color:var(--green)}
+.week-days{padding:8px 16px 0}
+.week-day-card{background:#fff;border:1px solid var(--paper3);border-radius:var(--r);margin-bottom:8px;overflow:hidden}
+.wday-header{display:flex;gap:12px;align-items:center;padding:12px 14px;cursor:pointer}
+.wday-num{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.wday-label{flex:1}
+.wday-name{font-size:14px;font-weight:600;color:var(--ink)}
+.wday-theme{font-size:11px;color:var(--ink3);margin-top:1px}
+.wday-chevron{font-size:12px;color:var(--ink3);transition:transform .2s}
+.week-day-card.open .wday-chevron{transform:rotate(180deg)}
+.wday-body{display:none;border-top:1px solid var(--paper2);padding:12px 14px}
+.week-day-card.open .wday-body{display:block}
+.wday-section{font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--green);margin-bottom:6px}
+.wday-habit{font-size:13px;color:var(--ink2);line-height:1.5;padding:3px 0;display:flex;gap:8px}
+.wday-habit::before{content:'✓';color:var(--green2);font-size:12px;flex-shrink:0;margin-top:1px}
+.wday-meal{font-size:13px;color:var(--ink2);line-height:1.5;padding:3px 0;display:flex;gap:8px}
+.wday-meal::before{content:'→';color:var(--amber);font-size:12px;flex-shrink:0;margin-top:1px}
+.wday-tip-box{background:var(--amber2);border-radius:6px;padding:9px 11px;font-size:12px;color:var(--amber);line-height:1.5;font-style:italic;margin-bottom:8px}
+.wday-note-box{background:var(--blue2);border-radius:6px;padding:8px 11px;font-size:12px;color:var(--blue);line-height:1.5}
+.journal-list{padding:0 16px;display:flex;flex-direction:column;gap:10px}
+.journal-entry{background:#fff;border:1px solid var(--paper3);border-radius:var(--r);padding:14px 15px}
+.je-date{font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.5px;margin-bottom:3px}
+.je-week-day{font-size:12px;color:var(--green);margin-bottom:8px;font-weight:600}
+.je-habits{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.je-tag{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--green4);color:var(--green)}
+.je-note{font-size:13px;color:var(--ink2);line-height:1.6;padding-top:8px;border-top:1px solid var(--paper2)}
+.je-empty{font-size:13px;color:var(--ink3);text-align:center;padding:40px 20px;line-height:1.9}
+#toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,20px)+72px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;padding:9px 18px;border-radius:20px;opacity:0;pointer-events:none;transition:all .3s;white-space:nowrap;z-index:999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div><div class="app-title">🌿 飲食改造計畫</div></div>
+    <div class="week-badge" id="weekBadge">第 1 週</div>
+  </div>
+  <div id="tabs">
+    <div class="tab active" onclick="switchTab('today')"><span class="tab-icon">☀️</span>今日</div>
+    <div class="tab" onclick="switchTab('lookup')"><span class="tab-icon">🍱</span>外食查</div>
+    <div class="tab" onclick="switchTab('scripts')"><span class="tab-icon">💬</span>腳本</div>
+    <div class="tab" onclick="switchTab('recovery')"><span class="tab-icon">🔄</span>恢復</div>
+    <div class="tab" onclick="switchTab('weekly')"><span class="tab-icon">📅</span>週計畫</div>
+    <div class="tab" onclick="switchTab('journal')"><span class="tab-icon">📓</span>日誌</div>
+  </div>
+  <div id="content">
+    <div class="panel active" id="panel-today">
+      <div class="today-hero">
+        <div class="today-day" id="todayLabel">今天</div>
+        <div class="today-theme" id="todayTheme">載入中...</div>
+        <div class="today-desc" id="todayDesc"></div>
+        <div class="progress-ring">
+          <div class="progress-label" id="progressLabel">今日習慣進度</div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="section-title">今日微習慣</div>
+      <div class="habit-list" id="habitList"></div>
+      <div class="section-title">外食方向</div>
+      <div class="meal-cards" id="mealCards"></div>
+      <div id="tipCard"></div>
+      <div class="section-title">今日筆記</div>
+      <div class="note-wrap">
+        <textarea class="note-area" id="noteArea" placeholder="記下今天吃了什麼、有什麼感受、或是哪個習慣做到了..."></textarea>
+        <button class="note-save-btn" onclick="saveNote()">儲存筆記 ✓</button>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="panel" id="panel-lookup">
+      <div style="padding:16px 16px 4px;font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--green)">外食場景快速查詢</div>
+      <div style="padding:0 16px 8px;font-size:12px;color:var(--ink3)">點選你現在遇到的場景</div>
+      <div class="lookup-grid" id="lookupGrid"></div>
+    </div>
+    <div class="panel" id="panel-scripts">
+      <div style="padding:16px 16px 4px;font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--green)">點餐腳本</div>
+      <div style="padding:0 16px 8px;font-size:12px;color:var(--ink3)">遇到高壓場景時直接用</div>
+      <div class="scripts-list" id="scriptsList"></div>
+    </div>
+    <div class="panel" id="panel-recovery">
+      <div style="padding:16px 16px 4px;font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--green)">失守後的恢復</div>
+      <div style="padding:0 16px 8px;font-size:12px;color:var(--ink3)">找到你的狀況，看下一步</div>
+      <div class="recovery-list" id="recoveryList"></div>
+    </div>
+    <div class="panel" id="panel-weekly">
+      <div style="padding:16px 16px 8px;font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--green)">四週完整計畫</div>
+      <div class="week-tabs" id="weekTabs"></div>
+      <div class="week-days" id="weekDays"></div>
+    </div>
+    <div class="panel" id="panel-journal">
+      <div style="padding:16px 16px 4px;font-family:'Noto Serif TC',serif;font-size:18px;font-weight:700;color:var(--green)">飲食日誌</div>
+      <div style="padding:0 16px 12px;font-size:12px;color:var(--ink3)">每天的習慣打勾與筆記紀錄</div>
+      <div class="journal-list" id="journalList"></div>
+    </div>
+  </div>
+  <div id="toast"></div>
+</div>
+<script>
+const PLAN={
+  1:[
+    {day:'週一',theme:'啟動日',desc:'第一天不求完美，只求比昨天多想了一秒鐘',habits:['起床後喝一杯水（300ml）','今天外食前先想好蛋白質來源'],meals:[{icon:'🍱',label:'午餐',name:'便當店選雞腿（去皮）＋燙青菜',tip:'<strong>小動作：</strong>白飯只裝七八分'},{icon:'🍜',label:'晚餐',name:'麵食選陽春麵加顆蛋，不加辣椒油',tip:'加蛋補足蛋白質，清爽又飽足'}],tip:'吃之前停一秒，問自己「有蛋白質嗎？」'},
+    {day:'週二',theme:'覺察日',desc:'放慢吃飯速度是最便宜的食慾控制工具',habits:['午餐前喝半杯水或點一碗清湯','吃飯速度放慢，每口多咀嚼幾下'],meals:[{icon:'🥗',label:'午餐',name:'自助餐：先夾蛋白質再夾菜，白飯最後裝',tip:'這個順序讓你自然少吃白飯'},{icon:'🧋',label:'飲料',name:'手搖點少糖或無糖，感受一下差別',tip:'少糖版熱量少 150–200 kcal'}],tip:'飽足信號比大腦晚 20 分鐘——吃慢一點，讓身體跟上'},
+    {day:'週三',theme:'測試日',desc:'5分鐘等待法：嘴饞衝動平均只持續3-5分鐘',habits:['第一次嘴饞時先等 5 分鐘再決定','記錄今天哪個時間點最想亂吃'],meals:[{icon:'🏪',label:'午餐',name:'超商：茶葉蛋×2＋無糖豆漿＋御飯糰',tip:'比便利麵更快、更飽、更便宜'},{icon:'🍽️',label:'技巧',name:'點餐時主動說「醬料放旁邊」',tip:'一個請求，減少 80–150 kcal'}],tip:'等 5 分鐘之後，通常你已經忘了想吃什麼了'},
+    {day:'週四',theme:'鞏固日',desc:'習慣需要重複才能自動化，今天是鞏固的一天',habits:['重複前三天習慣中最自然的那個','觀察哪個最困難，下週改善'],meals:[{icon:'🍱',label:'午餐',name:'回到熟悉的店，用新的點餐邏輯',tip:'同一家店，不同的選擇方式'},{icon:'🥚',label:'點心',name:'嘴饞選堅果或茶葉蛋，不是餅乾',tip:'蛋白質讓飽足感撐更久'}],tip:'三個習慣執行了一個，就已經在進步'},
+    {day:'週五',theme:'壓力日',desc:'週五是最容易「算了反正週末再說」的一天',habits:['特別留意情緒觸發（壓力→想吃的連結）','下班後先喝水再做任何飲食決定'],meals:[{icon:'🍲',label:'午餐',name:'任何你想吃的，但先喝湯再吃飯',tip:'湯增加飽足感，自然少吃飯'},{icon:'🥂',label:'晚餐',name:'若有聚餐：享受主菜，略過甜點',tip:'不需要全部吃，選你最想要的'}],tip:'撐過週五，就是勝利'},
+    {day:'週六',theme:'彈性日',desc:'彈性日是設計出來的，不是失敗',habits:['保留「先蛋白質」這一個習慣','可以吃真正想吃的，有意識地享受'],meals:[{icon:'🌅',label:'早午餐',name:'不限制，選你最想吃的',tip:'享受是計畫的一部分'},{icon:'🌙',label:'晚餐',name:'若吃多了，下一餐回正軌就好',tip:'不需要補救或懲罰自己'}],tip:'可持續性比完美更重要'},
+    {day:'週日',theme:'回顧日',desc:'不需要完美執行7天，執行了4天就是進步',habits:['回想這週哪個習慣最容易執行','下週最想改善的一個飲食場景？'],meals:[{icon:'🍽️',label:'餐食',name:'自由選擇',tip:'今天是休息日'},{icon:'📝',label:'晚餐後',name:'花 3 分鐘想想下週的一個改善點',tip:'寫下來比想著更有效'}],tip:'改變不是在一週內完成的，這週建立了基礎'},
+  ],
+  2:[
+    {day:'週一',theme:'情境分析',desc:'預先決策比臨場決策消耗少80%的意志力',habits:['列出這週最可能遇到的三個高風險場景','每個場景預先決定好「我會選什麼」'],meals:[{icon:'🍱',label:'午餐',name:'執行上週最成功的那個策略',tip:'建立在成功上，不是從零開始'},{icon:'🥩',label:'蛋白質',name:'今天每餐確認有蛋白質來源',tip:'蛋、豆腐、雞肉、豆漿都算'}],tip:'高風險場景：下午 3 點、同事揪吃、加班到很晚'},
+    {day:'週二',theme:'觸發點覺察',desc:'不是要消滅情緒進食，而是先知道它什麼時候發生',habits:['吃東西前問：情緒是什麼狀態？','真的餓，還是無聊/壓力/習慣？'],meals:[{icon:'🥗',label:'午餐',name:'自助餐：蛋白質→蔬菜→最後才白飯',tip:'改變順序，不改變選擇地點'},{icon:'🚶',label:'嘴饞對策',name:'壓力型嘴饞：先走動 3 分鐘再說',tip:'走動切換大腦狀態，比忍住有效'}],tip:'今天只需要誠實記錄，不需要改變任何事'},
+    {day:'週三',theme:'外食升級',desc:'你有權利要求客製化，大多數台灣小吃店都願意配合',habits:['點餐時主動說出一個要求（少油/醬料分開）','今天嘗試一個上週沒有做到的習慣'],meals:[{icon:'🍜',label:'午餐',name:'麵食：乾麵加滷蛋，不加肉燥',tip:'去掉肉燥省約 120 kcal'},{icon:'🍱',label:'晚餐',name:'便當要求換糙米或少飯',tip:'一個請求，長期效果顯著'}],tip:'客製化一次成功，下次會更自然'},
+    {day:'週四',theme:'社交場景',desc:'不缺席社交，帶著意識去參與',habits:['聚餐前先吃一顆水煮蛋或喝一杯豆漿','聚餐中：先點最想吃的一道，其他補菜'],meals:[{icon:'🥂',label:'聚餐',name:'先點你最想吃的主食，其他補蔬菜',tip:'有選擇感，不是剝奪感'},{icon:'🧋',label:'手搖',name:'跟朋友一起買，但點自己的甜度',tip:'社交參與，同時有意識選擇'}],tip:'聚餐前吃點東西，肚子不餓更能理性點餐'},
+    {day:'週五',theme:'壓力測試',desc:'就算今天吃壞了，也要做一件事：喝足夠的水',habits:['今天不求完美，求有意識','吃完之後，不要有罪惡感'],meals:[{icon:'🍽️',label:'餐食',name:'任何你需要吃的都可以',tip:'今天的重點是心理狀態，不是食物'},{icon:'💧',label:'水分',name:'今天至少喝 1500ml 的水',tip:'水分足夠可以減少 20% 的食慾'}],tip:'罪惡感是最沒效率的飲食管理工具'},
+    {day:'週六',theme:'主動選擇日',desc:'「主動選擇」和「被動接受」心理完全不同',habits:['今天外食完全由你主動決定','練習不被廣告、香味或同行者影響'],meals:[{icon:'🌅',label:'早午餐',name:'去你喜歡的店，用學到的框架點餐',tip:'框架不是限制，是讓你更自由的工具'},{icon:'🍰',label:'甜食',name:'若想吃甜食，選一樣最想吃的好好享用',tip:'有意識地享受，不是偷偷地吃'}],tip:'今天是兩週訓練的成果，你已經不一樣了'},
+    {day:'週日',theme:'兩週總結',desc:'兩週是建立基礎的時間，不是結束的時間',habits:['回顧兩週：什麼改變了？什麼還沒有？','選出三個願意帶入第三週的習慣'],meals:[{icon:'🍽️',label:'餐食',name:'自由選擇',tip:'你已經值得完整地享受一頓飯'},{icon:'📝',label:'晚餐後',name:'花 5 分鐘寫下：下個月的一個飲食意圖',tip:'意圖 > 計畫 > 執行'}],tip:'改變是一個方向，不是一個終點'},
+  ],
+  3:[
+    {day:'週一',theme:'鞏固期啟動',desc:'第三週：把好習慣變成身分認同',habits:['選出前兩週最有感的習慣，今天加強它','告訴自己：「我是一個有意識吃東西的人」'],meals:[{icon:'🍱',label:'午餐',name:'嘗試一個沒吃過的健康外食選項',tip:'用好奇心代替恐懼，探索新選擇'},{icon:'🥗',label:'蔬菜',name:'今天每一餐都要有一種蔬菜',tip:'不需要沙拉，燙青菜就夠了'}],tip:'習慣從「我要這樣做」變成「我就是這樣的人」是最關鍵的轉變'},
+    {day:'週二',theme:'飲食品質升級',desc:'同樣的熱量，可以買到更多的飽足感和營養',habits:['今天至少一餐選擇「比上次好一點」的版本','記錄一個讓你感覺「吃得好」的選擇'],meals:[{icon:'🥩',label:'蛋白質',name:'每餐多一顆蛋或一塊豆腐',tip:'蛋白質消化需要更多熱量，自帶燃脂效果'},{icon:'🥦',label:'蔬菜',name:'嘗試不同顏色的蔬菜',tip:'不同顏色代表不同的植化素，都好'}],tip:'「比上次好一點」是最可持續的進步策略'},
+    {day:'週三',theme:'環境設計',desc:'不靠意志力，靠改變你身邊的環境',habits:['清掉最容易讓你無意識進食的東西','在包包放一瓶水，讓喝水成為最省力的選擇'],meals:[{icon:'🏪',label:'採購',name:'超商買一樣健康的備用食物帶著',tip:'茶葉蛋、無糖豆漿是最好的選擇'},{icon:'🍱',label:'午餐',name:'點餐前先決定，不在店裡邊看邊猶豫',tip:'餓著肚子做決定永遠失敗'}],tip:'環境設計：讓好選擇成為最省力的選擇'},
+    {day:'週四',theme:'社交飲食自信',desc:'你已經有足夠的工具，現在練習在任何場合使用',habits:['今天遇到飲食場合，先在心裡說一次腳本再執行','不解釋自己的選擇，選了就是選了'],meals:[{icon:'🍜',label:'午餐',name:'和同事一起去，但用自己的點餐邏輯',tip:'不需要告訴別人你在「控制」'},{icon:'🧋',label:'飲料',name:'主動選擇，不跟著別人點',tip:'主動性本身就是練習'}],tip:'你不需要讓別人理解你的選擇，你只需要對自己誠實'},
+    {day:'週五',theme:'週末預備',desc:'週末是最容易全盤放棄的時候，提前設計',habits:['想好週末兩天各有哪些飲食場合','每個場合預先有一個策略（不需要完美）'],meals:[{icon:'🌙',label:'晚餐',name:'今晚吃個你真正喜歡的食物',tip:'享受是計畫的一部分，不是獎勵'},{icon:'💧',label:'水分',name:'今天喝足 1500ml 水',tip:'週末容易忘記喝水，今天養成習慣'}],tip:'週末有計畫，不是為了控制，是為了讓你更自由地享受'},
+    {day:'週六',theme:'彈性實戰',desc:'學到的框架，在最自由的一天檢驗',habits:['今天可以吃任何你想吃的，但每次都是有意識的選擇','結束後問自己：這頓飯讓我滿足了嗎？'],meals:[{icon:'🌅',label:'早午餐',name:'選你最喜歡的早午餐',tip:'喜歡的食物＋有意識的份量，就是完美'},{icon:'🌆',label:'下午',name:'若有甜食渴望，選一樣最想要的，好好坐下來吃',tip:'站著吃的東西，你不會記得吃過'}],tip:'有意識地享受，比盲目節制更讓人滿足'},
+    {day:'週日',theme:'三週回顧',desc:'三週了，你已經不是三週前的你',habits:['寫下三週以來最大的一個改變','寫下一件你現在自然會做但三週前不會的事'],meals:[{icon:'🍽️',label:'餐食',name:'自由選擇',tip:'今天是完全休息的一天'},{icon:'📝',label:'回顧',name:'用 5 分鐘寫下第四週最想專注的一件事',tip:'一件事，做好就夠了'}],tip:'三週的改變可能比你想的更大，花時間看見它'},
+  ],
+  4:[
+    {day:'週一',theme:'自動化測試',desc:'第四週：確認哪些習慣已經不需要刻意記得',habits:['今天不看計畫，只靠直覺吃飯','晚上回想：哪些好習慣自然發生了？'],meals:[{icon:'🍱',label:'午餐',name:'完全自主點餐，事後回顧選了什麼',tip:'這是觀察，不是考試'},{icon:'🥗',label:'蔬菜',name:'不強迫，但注意身體是不是自然想要蔬菜',tip:'四週後，身體的偏好會開始改變'}],tip:'習慣成熟的標誌：你不記得自己在執行習慣'},
+    {day:'週二',theme:'個人化調整',desc:'四週的經驗讓你最了解自己的身體和模式',habits:['找出一個對你特別有效、想繼續的習慣','找出一個對你效果有限、可以放掉的習慣'],meals:[{icon:'🥩',label:'蛋白質',name:'今天增加蛋白質，感受飽足感的差異',tip:'每公斤體重 1.2–1.6g 蛋白質是理想目標'},{icon:'🍜',label:'午餐',name:'嘗試一個新的健康外食選項',tip:'四週後你的味覺可能已經改變'}],tip:'沒有「最好的飲食計畫」，只有「最適合你的計畫」'},
+    {day:'週三',theme:'深度覺察',desc:'這週練習更精細地聆聽身體的信號',habits:['吃飯時把手機放遠，專注在食物上','吃到七分飽時暫停 2 分鐘，問自己還需要嗎？'],meals:[{icon:'🍽️',label:'正念進食',name:'今天選一餐完全專注地吃，不做其他事',tip:'正念進食讓你少吃 20% 卻更滿足'},{icon:'🧋',label:'飲料',name:'今天喝的每一杯都是有意識的選擇',tip:'包括白開水，都算'}],tip:'聆聽身體比任何飲食計畫都更精準'},
+    {day:'週四',theme:'長期視角',desc:'四週結束後，真正的長期習慣才剛開始',habits:['想像六個月後的自己，飲食習慣是什麼樣子？','今天做一件「六個月後的自己」會做的事'],meals:[{icon:'🥗',label:'午餐',name:'選一個你知道身體會感謝你的食物',tip:'感謝自己的飲食選擇，是最強的動力'},{icon:'🍵',label:'飲料',name:'換一種你喜歡的無糖飲料，讓它成為新習慣',tip:'習慣替換比習慣消除容易'}],tip:'你不是在節食，你在建立一種和食物的長期關係'},
+    {day:'週五',theme:'慶祝與整合',desc:'四週不容易，值得被看見',habits:['回顧四週，寫下三個你為自己驕傲的改變','今天做一件事慶祝你完成了四週'],meals:[{icon:'🍽️',label:'慶祝餐',name:'選一個你真心喜歡的食物，好好享用',tip:'慶祝是健康飲食的一部分'},{icon:'🧋',label:'飲料',name:'任何你想喝的，有意識地喝',tip:'你值得享受'}],tip:'完成四週的人，已經是少數。給自己一點掌聲'},
+    {day:'週六',theme:'新常態',desc:'這不是計畫的結束，是新常態的開始',habits:['今天不看任何計畫，完全用直覺生活','晚上問自己：四週前的我會怎麼做？現在的我呢？'],meals:[{icon:'🌅',label:'早午餐',name:'自由選擇，觀察自己的直覺',tip:'你的直覺已經和四週前不同了'},{icon:'🌆',label:'晚餐',name:'和家人或朋友一起吃，完全享受',tip:'社交飲食是生活的一部分，不是障礙'}],tip:'四週後的你，有了一套新的飲食語言'},
+    {day:'週日',theme:'四週完成',desc:'你做到了。不管執行了幾天，都比沒開始好。',habits:['寫下四週計畫給你最大的一個啟示','設定一個下個月想繼續的飲食意圖'],meals:[{icon:'🍽️',label:'餐食',name:'自由選擇',tip:'你已經有能力為自己做好的選擇'},{icon:'📝',label:'結語',name:'寫一封信給一個月後的自己',tip:'告訴他你現在知道的事'}],tip:'結束是另一個開始的起點'},
+  ],
+};
+
+const LOOKUP=[
+  {emoji:'🍱',scene:'便當店',badge:'最常見',rows:[{type:'good',text:'<strong>推薦：</strong>雞腿（去皮）＋燙青菜，白飯只裝七八分'},{type:'good',text:'<strong>可以：</strong>排骨便當，把炸粉撥掉減少約 80 kcal'},{type:'warn',text:'<strong>留意：</strong>焢肉便當油脂高，搭清湯＋多點青菜'},{type:'tip',text:'<strong>萬用技：</strong>開口請「醬料放旁邊、少飯」'}]},
+  {emoji:'🥗',scene:'自助餐',badge:'最靈活',rows:[{type:'good',text:'<strong>點餐順序：</strong>蛋白質 → 蔬菜（燙的）→ 最後才是白飯'},{type:'good',text:'<strong>好選擇：</strong>蒸魚、白切肉、豆腐、茶葉蛋'},{type:'warn',text:'<strong>陷阱：</strong>炒青菜油多、勾芡料理熱量加倍'},{type:'tip',text:'<strong>口訣：</strong>選燙的，不選炒的'}]},
+  {emoji:'🍜',scene:'麵食店',badge:'常見',rows:[{type:'good',text:'<strong>推薦：</strong>陽春麵加滷蛋加燙青菜，清爽完整'},{type:'good',text:'<strong>可以：</strong>乾麵去掉肉燥，省約 120 kcal'},{type:'warn',text:'<strong>留意：</strong>牛肉麵湯頭油，湯只喝一半'},{type:'tip',text:'<strong>加分：</strong>加蛋或豆干補足蛋白質'}]},
+  {emoji:'🧋',scene:'手搖飲',badge:'每天都有',rows:[{type:'good',text:'<strong>首選：</strong>無糖烏龍、綠茶、紅茶（0–20 kcal）'},{type:'good',text:'<strong>可以：</strong>少糖鮮奶茶，去掉配料更好'},{type:'warn',text:'<strong>留意：</strong>全糖大杯珍奶 ≈ 550 kcal，視為一餐甜點'},{type:'tip',text:'<strong>去掉珍珠：</strong>省 150–200 kcal'}]},
+  {emoji:'🏪',scene:'超商',badge:'快速解決',rows:[{type:'good',text:'<strong>最優組合：</strong>茶葉蛋×2＋無糖豆漿＋雞肉御飯糰'},{type:'good',text:'<strong>也不錯：</strong>生菜沙拉＋雞胸肉，醬料放旁邊'},{type:'tip',text:'<strong>關東煮好選：</strong>白蘿蔔、豆腐、玉米、雞蛋'},{type:'warn',text:'<strong>避開：</strong>含糖飲料、貢丸花枝丸（鈉高）'}]},
+  {emoji:'🍲',scene:'吃到飽/聚餐',badge:'特殊場合',rows:[{type:'tip',text:'<strong>策略：</strong>先繞一圈看完再決定，不要拿了就回座'},{type:'good',text:'<strong>點法：</strong>先喝湯→蛋白質主菜→蔬菜→最後才澱粉'},{type:'good',text:'<strong>停止點：</strong>微飽就停，不吃回本'},{type:'tip',text:'<strong>心法：</strong>吃到飽的價值在體驗，不在「吃回本」'}]},
+  {emoji:'🌙',scene:'夜市/宵夜',badge:'高風險',rows:[{type:'good',text:'<strong>好選擇：</strong>烤玉米、蒸蛋、燙青菜、烤雞翅'},{type:'tip',text:'<strong>策略：</strong>選一樣你最想吃的，不是全部都嘗'},{type:'warn',text:'<strong>留意：</strong>鹽酥雞、蚵仔煎等油炸類份量控制'},{type:'tip',text:'<strong>飲料：</strong>選無糖茶而不是含糖飲料'}]},
+];
+
+const SCRIPTS=[
+  {emoji:'🧋',scene:'同事揪買手搖',lines:[{type:'old',text:'好啦全糖珍奶，反正今天已經吃很多了'},{type:'new',text:'我跟你一起買！我點微糖綠茶'},{type:'why',text:'社交參與了，熱量從 550 降到 30 kcal'}]},
+  {emoji:'🍱',scene:'便當隨手點了焢肉',lines:[{type:'old',text:'算了今天先這樣，明天再補救'},{type:'new',text:'沒關係，我加點清湯、白飯少一點'},{type:'why',text:'不換食物，只做一個小調整，減少約 150 kcal'}]},
+  {emoji:'🥂',scene:'家族聚餐桌上什麼都有',lines:[{type:'old',text:'難得聚餐就算了，等下回去再補救'},{type:'new',text:'先喝湯，再夾我最想吃的兩樣，吃慢一點'},{type:'why',text:'「最想吃的兩樣」有選擇感，吃慢讓飽足信號趕上你'}]},
+  {emoji:'🌙',scene:'晚上追劇嘴饞',lines:[{type:'old',text:'買了再說，反正明天多走幾步就好'},{type:'new',text:'先喝水等 5 分鐘，看看還想不想吃'},{type:'why',text:'嘴饞衝動平均持續 3-5 分鐘，等過了通常就忘了'}]},
+  {emoji:'😤',scene:'壓力大完全不想控制',lines:[{type:'old',text:'今天算了，明天再重新開始'},{type:'new',text:'今天可以多吃一點，但選我真正想吃的，不是隨便亂吃'},{type:'why',text:'有意識地讓步比無意識地崩潰好，主導權還在你手裡'}]},
+];
+
+const RECOVERY=[
+  {icon:'🍽️',title:'一餐吃太多',sub:'發現吃過頭了，接下來怎麼辦',steps:[{text:'<strong>立刻做：</strong>喝一杯水，站起來走動 5 分鐘'},{text:'<strong>禁止說：</strong><span class="avoid">「今天已經毀了，晚餐也隨便吃」</span>——一餐失誤變成整天失誤的陷阱'},{text:'<strong>下一餐：</strong>正常吃，不要少吃來「補償」'}]},
+  {icon:'📅',title:'連續幾天沒執行',sub:'已經中斷好幾天了，怎麼重啟',steps:[{text:'<strong>最低門檻版本：</strong>今天的下一餐，先喝水再吃。就這一個動作'},{text:'<strong>禁止想：</strong><span class="avoid">「等到週一再重新開始」</span>——任何一刻都可以是重啟點'},{text:'<strong>心理重塑：</strong>中斷是習慣養成的正常過程，不是個人失敗'}]},
+  {icon:'🥂',title:'聚餐完全放開',sub:'節慶場合吃了很多',steps:[{text:'<strong>這不算失守：</strong>家族聚餐、朋友婚宴——全力享受是正確的'},{text:'<strong>真正的風險：</strong>聚餐後隔天的補償性節食，然後第三天因為太餓而暴食'},{text:'<strong>正確做法：</strong>隔天完全正常吃，不用任何調整'}]},
+  {icon:'😰',title:'壓力大完全失控',sub:'情緒讓你吃了平常不會吃的',steps:[{text:'<strong>先承認：</strong>壓力性進食是大腦的獎勵機制在運作，不是意志力問題'},{text:'<strong>不要懲罰：</strong>不要用運動「消耗掉」，不要明天故意少吃'},{text:'<strong>問自己：</strong>「下次這個情況，我可以先做什麼替代行為？」走動、喝水、深呼吸'}]},
+];
+
+// STATE
+const today=new Date();
+const DOW=today.getDay();
+const DNAMES=['週日','週一','週二','週三','週四','週五','週六'];
+function getPlanDay(){return DOW===0?6:DOW-1}
+function getPlanWeek(){
+  let start=localStorage.getItem('dietStart');
+  if(!start){
+    const d=new Date(today);
+    d.setDate(d.getDate()-(DOW===0?6:DOW-1));
+    d.setHours(0,0,0,0);
+    start=d.toISOString();
+    localStorage.setItem('dietStart',start);
+  }
+  const diff=Math.floor((today-new Date(start))/86400000);
+  return Math.min(4,Math.floor(diff/7)+1);
+}
+const planWeek=getPlanWeek();
+const planDay=getPlanDay();
+const dayData=PLAN[planWeek][planDay];
+const todayStr=today.toDateString();
+const habitsKey='h_'+todayStr;
+const noteKey='n_'+todayStr;
+let doneHabits=JSON.parse(localStorage.getItem(habitsKey)||'[]');
+
+function saveHabits(){localStorage.setItem(habitsKey,JSON.stringify(doneHabits));updateJournalMeta()}
+function updateJournalMeta(){
+  const k='j_'+todayStr;
+  const e=JSON.parse(localStorage.getItem(k)||'{}');
+  localStorage.setItem(k,JSON.stringify({...e,date:todayStr,week:planWeek,day:planDay,theme:dayData.theme,habits:[...doneHabits],note:e.note||''}));
+}
+function saveNote(){
+  const val=document.getElementById('noteArea').value.trim();
+  localStorage.setItem(noteKey,val);
+  const k='j_'+todayStr;
+  const e=JSON.parse(localStorage.getItem(k)||'{}');
+  localStorage.setItem(k,JSON.stringify({...e,date:todayStr,week:planWeek,day:planDay,theme:dayData.theme,habits:doneHabits,note:val}));
+  showToast('已儲存 ✓');
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['today','lookup','scripts','recovery','weekly','journal'][i]===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(id==='journal')renderJournal();
+}
+
+function renderToday(){
+  document.getElementById('weekBadge').textContent='第 '+planWeek+' 週';
+  document.getElementById('todayLabel').textContent=DNAMES[DOW]+'・第 '+planWeek+' 週';
+  document.getElementById('todayTheme').textContent=dayData.theme;
+  document.getElementById('todayDesc').textContent=dayData.desc;
+  const hl=document.getElementById('habitList');
+  hl.innerHTML='';
+  dayData.habits.forEach((h,i)=>{
+    const done=doneHabits.includes(i);
+    const div=document.createElement('div');
+    div.className='habit-item'+(done?' done':'');
+    div.innerHTML='<div class="habit-check">'+(done?'✓':'')+'</div><div class="habit-text">'+h+'</div>';
+    div.onclick=()=>{
+      doneHabits.includes(i)?doneHabits=doneHabits.filter(x=>x!==i):(doneHabits.push(i),showToast('完成！繼續保持 💪'));
+      saveHabits();renderToday();
+    };
+    hl.appendChild(div);
+  });
+  updateProgress();
+  const mc=document.getElementById('mealCards');
+  mc.innerHTML='';
+  dayData.meals.forEach(m=>{
+    const c=document.createElement('div');
+    c.className='meal-card';
+    c.innerHTML='<div class="meal-header" onclick="this.parentElement.classList.toggle(\'open\')"><span class="meal-icon">'+m.icon+'</span><div class="meal-info"><div class="meal-label">'+m.label+'</div><div class="meal-name">'+m.name+'</div></div><span class="meal-chevron">▼</span></div><div class="meal-body"><div class="meal-tip">💡 '+m.tip+'</div></div>';
+    mc.appendChild(c);
+  });
+  document.getElementById('tipCard').innerHTML='<div class="tip-card" style="margin-top:8px"><div class="tip-icon">💡</div><div class="tip-text">'+dayData.tip+'</div></div>';
+  document.getElementById('noteArea').value=localStorage.getItem(noteKey)||'';
+}
+function updateProgress(){
+  const pct=dayData.habits.length?Math.round(doneHabits.length/dayData.habits.length*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent='今日習慣進度 '+doneHabits.length+'/'+dayData.habits.length;
+}
+
+function renderLookup(){
+  const g=document.getElementById('lookupGrid');g.innerHTML='';
+  LOOKUP.forEach(item=>{
+    const c=document.createElement('div');c.className='lookup-card';
+    c.innerHTML='<div class="lookup-header" onclick="this.parentElement.classList.toggle(\'open\')"><span class="lookup-emoji">'+item.emoji+'</span><span class="lookup-scene">'+item.scene+'</span><span class="lookup-badge">'+item.badge+'</span></div><div class="lookup-body">'+item.rows.map(r=>'<div class="lookup-row"><div class="lr-dot '+r.type+'"></div><div class="lr-text">'+r.text+'</div></div>').join('')+'</div>';
+    g.appendChild(c);
+  });
+}
+
+function renderScripts(){
+  const l=document.getElementById('scriptsList');l.innerHTML='';
+  SCRIPTS.forEach(s=>{
+    const c=document.createElement('div');c.className='script-card';
+    c.innerHTML='<div class="script-header" onclick="this.parentElement.classList.toggle(\'open\')"><span class="script-emoji">'+s.emoji+'</span><span class="script-scene">'+s.scene+'</span><span style="font-size:12px;color:var(--ink3)">▼</span></div><div class="script-body">'+s.lines.map(l=>'<div class="script-line"><span class="sl-tag '+l.type+'">'+(l.type==='old'?'舊':l.type==='new'?'新':'為何')+'</span><div class="sl-text">'+l.text+'</div></div>').join('')+'</div>';
+    l.appendChild(c);
+  });
+}
+
+function renderRecovery(){
+  const l=document.getElementById('recoveryList');l.innerHTML='';
+  RECOVERY.forEach(r=>{
+    const c=document.createElement('div');c.className='rec-card';
+    c.innerHTML='<div class="rec-header" onclick="this.parentElement.classList.toggle(\'open\')"><div class="rec-icon">'+r.icon+'</div><div><div class="rec-title">'+r.title+'</div><div class="rec-sub">'+r.sub+'</div></div></div><div class="rec-body">'+r.steps.map((s,i)=>'<div class="rec-step"><div class="rec-num">'+(i+1)+'</div><div class="rec-step-text">'+s.text+'</div></div>').join('')+'</div>';
+    l.appendChild(c);
+  });
+}
+
+let curWeek=1;
+function renderWeekTabs(){
+  const t=document.getElementById('weekTabs');t.innerHTML='';
+  [1,2,3,4].forEach(w=>{
+    const d=document.createElement('div');
+    d.className='wtab'+(w===curWeek?' active':'');
+    d.textContent='第'+w+'週'+(w===planWeek?' ●':'');
+    d.onclick=()=>{curWeek=w;renderWeekTabs();renderWeekDays()};
+    t.appendChild(d);
+  });
+}
+function renderWeekDays(){
+  const data=PLAN[curWeek];
+  const container=document.getElementById('weekDays');container.innerHTML='';
+  data.forEach((d,i)=>{
+    const isToday=curWeek===planWeek&&i===planDay;
+    const c=document.createElement('div');
+    c.className='week-day-card'+(isToday?' open':'');
+    // try to get saved note for this day
+    const refDate=new Date(today);
+    refDate.setDate(refDate.getDate()-(planDay-i)-((planWeek-curWeek)*7));
+    const jEntry=JSON.parse(localStorage.getItem('j_'+refDate.toDateString())||'null');
+    const noteHTML=jEntry&&jEntry.note?'<div class="wday-note-box">📝 '+jEntry.note+'</div>':'';
+    c.innerHTML='<div class="wday-header" onclick="this.parentElement.classList.toggle(\'open\')"><div class="wday-num" style="'+(isToday?'background:var(--amber);':'')+'">'+( i+1)+'</div><div class="wday-label"><div class="wday-name">'+d.day+'・'+d.theme+(isToday?' 〔今天〕':'')+'</div><div class="wday-theme">'+d.desc+'</div></div><span class="wday-chevron">▼</span></div><div class="wday-body"><div class="wday-section">微習慣</div><div>'+d.habits.map(h=>'<div class="wday-habit">'+h+'</div>').join('')+'</div><div class="wday-section" style="margin-top:10px">外食方向</div><div>'+d.meals.map(m=>'<div class="wday-meal">'+m.label+'：'+m.name+'</div>').join('')+'</div><div class="wday-tip-box" style="margin-top:10px">💡 '+d.tip+'</div>'+noteHTML+'</div>';
+    container.appendChild(c);
+  });
+}
+
+function renderJournal(){
+  const list=document.getElementById('journalList');list.innerHTML='';
+  const entries=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('j_')){try{const e=JSON.parse(localStorage.getItem(k));if(e&&e.date)entries.push(e)}catch(err){}}
+  }
+  entries.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!entries.length){
+    list.innerHTML='<div class="je-empty">還沒有日誌紀錄<br><br>打勾今日習慣或儲存筆記<br>就會自動出現在這裡 📝</div>';
+    return;
+  }
+  entries.forEach(e=>{
+    const d=new Date(e.date);
+    const dn=DNAMES[d.getDay()]||'';
+    const planD=PLAN[e.week]&&PLAN[e.week][e.day];
+    const c=document.createElement('div');c.className='journal-entry';
+    const hTags=(e.habits&&e.habits.length&&planD)?e.habits.map(i=>'<span class="je-tag">✓ '+(planD.habits[i]||'習慣'+(i+1))+'</span>').join(''):'<span style="font-size:11px;color:var(--ink3)">尚無習慣紀錄</span>';
+    c.innerHTML='<div class="je-date">'+(d.getMonth()+1)+' / '+d.getDate()+' '+dn+'</div><div class="je-week-day">第 '+e.week+' 週・'+(e.theme||'')+'</div><div class="je-habits">'+hTags+'</div>'+(e.note?'<div class="je-note">'+e.note+'</div>':'');
+    list.appendChild(c);
+  });
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+renderToday();renderLookup();renderScripts();renderRecovery();renderWeekTabs();renderWeekDays();
+</script>
+</body>
+</html>
